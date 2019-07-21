@@ -1,0 +1,14 @@
+---
+title: "ggplot"
+author: "Pao"
+date: "July 21, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Notas sobre algunos capítulos de R for Data Science.
+
+## Capítulo 3

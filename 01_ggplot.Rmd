@@ -7,8 +7,79 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
 ```
 
 Notas sobre algunos capítulos de R for Data Science.
 
 ## Capítulo 3
+
+El paquete `ggplot2` es la gloría para graficar y funciona con una estructura de capas. La primera función que se usa es `ggplot()` que crea el área del gŕafico, necesita el dataframe y las variables a graficar. Luego se le suma el `geom_`que se quiere graficar, podrían ser puntos, líneas o casi cualquier cosa.
+
+La función `glimpse()`parece ser análoga a `str()`.
+
+```{r}
+glimpse(mpg)
+```
+
+Se le llama *valor* a lo que describe los datos y *nivel* a lo que describe propiedades estéticas (color, forma, tamaño de un punto, etc.).
+
+```{r}
+ggplot(mpg, aes(x = displ, y = hwy, colour = displ < 5)) +
+  geom_point()
+```
+
+Mirá que interesante: si agregás `colour = displ < 5` dentro del `aes` internamente te genera dos categorías y las mapea al color! Medio desprolijo pero rápido para explorar los datos.
+
+### Facet
+
+¿Qué hay detrás de la sintaxis de dvr ~ .? *VER*
+
+```{r}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  facet_grid(drv ~ .)
+
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  facet_grid(. ~ drv)
+```
+
+
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = drv)) +
+  geom_smooth(method = 'loess', aes(color = drv))
+```
+
+
+```{r}
+ggplot(mpg, aes(drv)) + 
+  geom_bar(aes(x = factor(1), fill =drv))
+
+ggplot(mpg, aes(drv)) + 
+  geom_bar(aes(x = factor(1), fill =drv)) + 
+  coord_polar(theta = "y") +
+  labs(title = "Título", 
+       subtitle = "Subtítulo")
+  
+
+```
+
+### Sobre nombres de variables
+
+Solo se puede usar punto (.) y guión bajo (_), también mayúsculas. Mantener el criterio y listo!
+
+### Símbolos en labs
+
+Se puede usar la función `quote()` que es de `plotmath` y acepta una determinada sintaxis. 
+
+### Escalas
+
+```{r}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy, color = displ)) +
+  scale_color_gradient2()
+```
+
+

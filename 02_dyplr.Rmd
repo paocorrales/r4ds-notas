@@ -32,6 +32,10 @@ flights
 
 ### Ejercicios
 
+#### filter()
+
+Tip: `near()` está bueno para evaluar igualdad `==` en el caso de números reales.
+
 1. Find all flights that
 
     1. Had an arrival delay of two or more hours
@@ -52,6 +56,7 @@ filter(flights, carrier %in% c("UA", "DL"))
 filter(flights, month %in% c(7, 8, 9))
 
 filter(flights, arr_delay >= 120 & dep_delay == 0)
+
 ```
 
 2. Another useful dplyr filtering helper is `between()`. What does it do? Can you use it to simplify the code needed to answer the previous challenges?
@@ -76,6 +81,8 @@ NA | TRUE      # NA o TRUE, es TRUE
 FALSE & NA     # Cualquier cosa y falso es FALSE
 
 ```
+
+#### arrange()
 
 1. How could you use `arrange()` to sort all missing values to the start? (Hint: use is.na()).
 
@@ -103,6 +110,8 @@ fastest_flights <- select(
 arrange(fastest_flights, desc(mph))
 ```
 
+#### select()
+
 1. Brainstorm as many ways as possible to select dep_time, dep_delay, arr_time, and arr_delay from flights.
 
 ```{r}
@@ -122,6 +131,8 @@ select(flights, air_time, air_time)
 ```{r}
 select(flights, contains("TIME")) # Por defecto contains() ignora mayuscualas/minúsculas
 ```
+
+#### mutate()
 
 1. Currently dep_time and sched_dep_time are convenient to look at, but hard to compute with because they’re not really continuous numbers. Convert them to a more convenient representation of number of minutes since midnight.
 

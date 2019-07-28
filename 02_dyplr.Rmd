@@ -1,0 +1,144 @@
+---
+title: "02_dplyr"
+author: "Pao"
+date: "July 27, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Notas del capítulo 5
+
+Data transformation with dpylr
+
+```{r}
+library(nycflights13)
+library(tidyverse)
+```
+
+```{r}
+flights
+```
+
+### Verbos de dyplr
+
+* `filter()` filtran las filas que cumplen la condición o condiciones dadas.
+* `arrange()` ordena las filas en orden ascendente o descendente (si agregamos `desc()`) según la columna o columnas indicadas.
+* `select()` permite seleccionar variables dentro de un dataframe. Acepta funciones para seleccionar los nombres de las variables como `starts_with("abc")`. El hermano es `rename()` que se usa para renombrar las variables.
+* `mutate()` permite agregar nuevas columnas. Si solo querés quedarte con las nuevas usas `transmute()`.
+* `summarise()` colapse el data frame a una fila usando alguna función. Lo interesante es usarlo junto con `group_by()`.
+
+### Ejercicios
+
+1. Find all flights that
+
+    1. Had an arrival delay of two or more hours
+    2. Flew to Houston (IAH or HOU)
+    3. Were operated by United, American, or Delta
+    4. Departed in summer (July, August, and September)
+    5. Arrived more than two hours late, but didn’t leave late
+    6. Were delayed by at least an hour, but made up over 30 minutes in flight
+    7. Departed between midnight and 6am (inclusive)
+
+```{r}
+filter(flights, arr_delay >= 120)
+
+filter(flights, dest %in% c("IAH", "HOU"))
+
+filter(flights, carrier %in% c("UA", "DL"))
+
+filter(flights, month %in% c(7, 8, 9))
+
+filter(flights, arr_delay >= 120 & dep_delay == 0)
+```
+
+2. Another useful dplyr filtering helper is `between()`. What does it do? Can you use it to simplify the code needed to answer the previous challenges?
+
+```{r}
+filter(flights, between(month, 7, 9))
+```
+
+3. How many flights have a missing dep_time? What other variables are missing? What might these rows represent?
+
+```{r}
+count(filter(flights, is.na(dep_time)))
+
+filter(flights, is.na(dep_time))
+```
+
+4. Why is `NA ^ 0` not missing? Why is `NA | TRUE` not missing? Why is `FALSE & NA` not missing? Can you figure out the general rule? (`NA * 0` is a tricky counterexample!)
+
+```{r}
+NA^0
+NA | TRUE      # NA o TRUE, es TRUE
+FALSE & NA     # Cualquier cosa y falso es FALSE
+
+```
+
+1. How could you use `arrange()` to sort all missing values to the start? (Hint: use is.na()).
+
+```{r}
+arrange(flights, desc(dep_time)) # No funciona
+
+arrange(flights, desc(is.na(dep_time)), dep_time) # TRUE > FALSE
+```
+
+2. Sort flights to find the most delayed flights. Find the flights that left earliest.
+
+```{r}
+arrange(flights, desc(dep_delay))
+```
+
+3. Sort flights to find the fastest flights.
+
+```{r}
+fastest_flights <- mutate(flights, mph = distance / air_time * 60)
+fastest_flights <- select(
+  fastest_flights, mph, distance, air_time,
+  flight, origin, dest, year, month, day
+)
+
+arrange(fastest_flights, desc(mph))
+```
+
+1. Brainstorm as many ways as possible to select dep_time, dep_delay, arr_time, and arr_delay from flights.
+
+```{r}
+# Mencionando uno a uno, fiaca.
+# Expresión regular 3ch_ch?, en realidad funciona: "^(dep|arr)_(time|delay)$"
+select(flights, matches("^(dep|arr)_(time|delay)$"))
+```
+
+2. What happens if you include the name of a variable multiple times in a select() call?
+
+```{r}
+select(flights, air_time, air_time)
+```
+
+4. Does the result of running the following code surprise you? How do the select helpers deal with case by default? How can you change that default?
+
+```{r}
+select(flights, contains("TIME")) # Por defecto contains() ignora mayuscualas/minúsculas
+```
+
+1. Currently dep_time and sched_dep_time are convenient to look at, but hard to compute with because they’re not really continuous numbers. Convert them to a more convenient representation of number of minutes since midnight.
+
+```{r}
+mutate(flights, 
+       dep_hour = dep_time %/% 100,
+       dep_min = dep_time %% 100,
+       dep_min_00 = (dep_hour*60 + dep_min) %% 1440) 
+```
+
+2. Compare air_time with arr_time - dep_time. What do you expect to see? What do you see? What do you need to do to fix it?
+
+```{r}
+mutate(flights,
+       dep_time = (dep_time %/% 100 * 60 + dep_time %% 100) %% 1440,
+       arr_time = (arr_time %/% 100 * 60 + arr_time %% 100) %% 1440,
+       air_time2 = arr_time - dep_time) %>% 
+  select(air_time, air_time2)
+``` 
+

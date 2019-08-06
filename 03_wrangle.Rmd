@@ -1,0 +1,89 @@
+---
+title: "03_tibbles"
+author: "Pao"
+date: "8/6/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## Notas del capítulo 5
+
+Conociendo las tibbles. Funcionan como data.frames pero son más "seguras". Por ejemplo si haces el subset de una columna con `[]` un data.frame te devuelve un vector pero una tiblle te devuelve una tibble. También te permite poner nombres raros a las columnas, no te convierte strings a factor, y no hace *partial maching*.
+
+### Ejercicios
+
+1. How can you tell if an object is a tibble?
+
+```{r}
+class(mtcars)
+is_tibble(mtcars)
+```
+
+2. Compare and contrast the following operations on a data.frame and equivalent tibble. What is different? Why might the default data frame behaviours cause you frustration?
+
+```{r}
+df <- data.frame(abc = 1, xyz = "a")
+df$x
+df[, "xyz"]
+df[, c("abc", "xyz")]
+
+```
+Esto tiene que ver con el *macheo parcial*, cuando le pedimos que nos muestre la columna x, no la encuentra pero encuentra una parecida y entonces asume que es esa. Esto puede ser muy práctico si querés ahorrarte un par de letras pero si no era tu intención, you are in trouble. 
+
+
+3. If you have the name of a variable stored in an object, e.g. `var <- "mpg"`, how can you extract the reference variable from a tibble?
+
+```{r}
+var <- "mpg"
+
+mtcars <- as_tibble(mtcars)
+mtcars[[var]]
+
+```
+
+
+4. Practice referring to non-syntactic names in the following data frame by:
+
+    - Extracting the variable called 1.
+
+    - Plotting a scatterplot of 1 vs 2.
+
+    - Creating a new column called 3 which is 2 divided by 1.
+
+    - Renaming the columns to one, two and three.
+
+```{r}
+annoying <- tibble(
+  `1` = 1:10,
+  `2` = `1` * 2 + rnorm(length(`1`))
+)
+
+annoying[["1"]]
+annoying$`1`
+
+ggplot(annoying, aes(`1`, `2`)) +
+  geom_point()
+
+annoying %>% 
+  mutate(`3` = `2`/`1`)
+
+annoying <- rename(annoying, one = `1`, two = `2`, three = `3`)
+
+```
+
+5. What does `tibble::enframe()` do? When might you use it?
+
+enframe() converts named atomic vectors or lists to one- or two-column data frames. For a list, the result will be a nested tibble with a column of type list. For unnamed vectors, the natural sequence is used as name column.
+
+```{r}
+tibble::enframe(c(a = 1, b = 2, c = 3))
+```
+
+
+6. What option controls how many additional column names are printed at the footer of a tibble?
+
+The help page for the print() method of tibble objects is discussed in ?print.tbl. The n_extra argument determines the number of extra columns to print information for.

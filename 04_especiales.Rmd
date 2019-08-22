@@ -1,0 +1,217 @@
+---
+title: "04_tipos_especiales"
+author: "Pao"
+date: "8/22/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(lubridate)
+library(nycflights13)
+library(tidyverse)
+```
+
+## Capitulo 16: Dates and Times
+
+Problemas al trabajar con fechas y horas:
+
+* No todos los años tienen 365 días.
+* No todos los días tienen 24 horas (cuando cambian de zona horaria por ejemplo)
+* Existen zonas horarias incluso dentro de un mismo país
+
+Tipos de datos:
+
+* **date** --> una fecha exacta, sin una hora específica.
+* **time** --> un momento específico del día.
+* **date_time** --> un momento específico en el tiempo, o sea un momento específicado al segundo (en general) y un día detemrinado.
+
+Usualmente creamos este tipo de datos a partir de un string luego de importar una base de datos o de componentes individuales como en el caso de la base datos `nycflights13` pero podría ser a partir de otro objeto del tipo date/time.
+
+### Date/Times from strings
+
+Se puede usasr `parse_datetime()` o las maravillas de `lubridate`. Esta librería tienen funciones que permiten convertir strings (o números!) en diversos formatos a date/time. La clave estña en elegir la función que se corresponde con el formato. Por ejemplo `ymd()` espera un string con los elementos de la fecha en orden año-mes-día.
+
+Si además tenemos información sobre el tiempo hay otras fucniones de la misma familia. Por ejemplo `ymd_hms()` recibe además de el año-mes-día la hora-minuto-segundo. 
+
+> **Time Zone warning:** las funciones que devuelven FECHAS por defecto no tienen un time zone definido. Las funciones que devuelve FECHA_HORA por defecto le asignan "UTC" (Cordinated Universal Time). Ojo con esto cuando estamos trabajando con datos en hora local, para incluir esto hay que usar el argumento `tz`. 
+>
+> * ¿Cómo se cual es mi time zone? --> `Sys.timezone()`                                                               
+> * ¿Cuáles son las times zones disponibles? --> `OlsonNames()`
+
+> **Sobre el formato del string:** Lubridate es bastante inteligente y entiende cosas como estas:             
+> `ymd(20090101, "2009-01-02", "2009 01 03", "2009-1-4", "2009-1, 5", "Created on 2009 1 6", "200901 !!! 07")`
+>
+> Pero tiene problemas por ejemplo cuando los números no estan expresados con dos dígitos:             
+> `ymd("201002-01", "201002-1", "20102-1")`
+
+
+### Date/Times from individual components
+
+Es posible que tengamos la información sobre fechas y horas en variables individuales. Normalmente yo concatenaría la información de las variables y usaría las funciones que ya vimos. Pero hay funciones específicas para esto: `make_dates()` y `make_datetime()`.
+
+```{r}
+flights %>% 
+  select(year, month, day, hour, minute) %>% 
+  mutate(departure = make_datetime(year, month, day, hour, minute))
+```
+
+> **Time Zone warning:** estas funcines también aceptan como argumento el uso horario.
+
+Si quisieramos ver la distribucón de partidas para un mes en particular:
+
+```{r}
+flights %>% 
+  select(year, month, day, hour, minute) %>% 
+  mutate(departure = make_datetime(year, month, day, hour, minute)) %>% 
+  filter(month(departure) == 3) %>%  #Filtro los datos de marzo
+  ggplot(aes(departure)) +
+  geom_freqpoly(binwidth = 86400)    #86400 equivale a 1 día
+```
+ 
+> Ojo: cuando le asignamos un valor al bindwith hay que tener en cuenta que la unidad es segundo, por eso en este caso 86400 segundos corresponden a 1 día. 
+
+Yo no estoy acostumbrada a usar histogramas o polígonos de frecuencia, muy probablemente ubiera pensado en algo así:
+
+```{r}
+flights %>% 
+  select(year, month, day, hour, minute) %>% 
+  mutate(departure = make_datetime(year, month, day, hour, minute)) %>% 
+  filter(month(departure) == 3) %>%  #Filtro los datos de marzo
+  group_by(day) %>% 
+  summarise(dep = n()) %>% 
+  ggplot(aes(day, dep)) +
+  geom_line()
+```
+
+Lo bueno es que la información de los extremos de la serie parece más real, lo malo es que se pierte la información de la fecha exacta (ahora todo está expresado en días, ¿pero de qué mes?). Que no cunda el pánico todo tiene solución. 
+
+```{r}
+flights %>% 
+  select(year, month, day, hour, minute) %>% 
+  mutate(departure = make_datetime(year, month, day, hour, minute)) %>% 
+  mutate(departure_byday = floor_date(departure, unit = "day")) %>%  #Redondea para abajo la fecha a la unidad indicada
+  group_by(departure_byday) %>% 
+  summarise(count = n()) %>%
+  filter(month(departure_byday) == 3) %>%                            #Filtro los datos de marzo
+  ggplot(aes(departure_byday, count)) +
+  geom_line()
+```
+
+La función `floor_date()` redondea para abajo cualquier fecha/tiempo a la unidad indicada (en este caso días, por defecto es segundos). También existe `round_date()` que redondea a lo más cercano (Ojo acá, que podría cambiar la fecha!) y `ceiling_date()` que redondea para arriba. Con esto consigo el mismo gráfico de arriba pero sin perder la información sobre la fecha exacta.
+
+### Date/Times from other types
+
+Cuando necesitas cambiar entre fechas y fecha_hora (y es recomendable trabajar con la unidad más simple necesaria) se usa `as_datetime()` o `as_date()`.
+
+```{r}
+as_datetime(today())
+#> [1] "2019-01-08 UTC"
+as_date(now())
+#> [1] "2019-01-08"
+```
+
+Por supuesto `as_datetime()` toma en cuenta el uso horario.
+
+> **Sobre el formato:** Con lubridate parece no ser necesario (que inteligente!) pero algunas funciones de base y otros paquetes que manejan dates/times requieren que le indiquemos el formato de la fecha para que pueda interpretar el string que queremos convertir. 
+>
+> Esto es también importante cuando queremos cambiar el formato a la fecha. Por ejemplo si tenemos una fecha_hora de la pinta `2013-01-01 06:00:00` y queremos que se vea como `2013/01/01-05:40:00` podemos usar la función `format()`:                              
+`new_format <- format(old_format, "%Y/%m/%d-%H:%M:%S")`                                         
+La manera de expresar el formato final puede ser al menos aburrida de escribir, para ver las infinitas opciones posibles pueden buscar [acá](https://stat.ethz.ch/R-manual/R-devel/library/base/html/strptime.html).
+
+### Getting components
+
+Hay un ejemplo más arriba donde uso la función `month()` para filtrar las observaciones del mes de mayo. Como esta hay una familia entera por ejemplo `year()`, `wday()`, etc. Estas funciones sirven, al reves que `make_datetime()`, para extraer una partde del dato. 
+
+Las funciones `month()` y `wday()` tienen el argumento `label` que devuelve el nombre del mes o del día de la semana. Por defecto esto escupe los nombres en el idioma "local", para cambiar esto hay que usar el argumento `locale` por ejemplo, para que los nombres estén en inglés:
+
+```{r}
+x <- ymd_hms("2013-01-01 05:15:00")
+month(x, label = TRUE, locale = "en_US.utf8")
+```
+
+
+Estas funciones también sirven para cambiar un determinado componente de una fecha o fecha_hora, por ejemplo:
+
+```{r}
+hour(x) <- hour(x) + 1  #Suma 1 hora a x.
+```
+
+O si queremos crear un nuevo elemento, está la función `update()`. En el ejemplo del libro, usa la función para colapsar los días y que quede solo la información de la hora y así ver la distribución de vuelos a lo largo del día. 
+
+
+### Cuentas con fechas
+
+R identifica distintos lapsos de tiempo:
+
+* **durations**, que representan un numero exacto de segundos.
+* **periods**, que representa unidades que entienden los humanos como semandas y meses.
+* **intervals**, que representan un punto inicial y uno final.
+
+#### Durations (diferencias de tiempo)
+
+Si calculamos la diferencia entre dos fechas, R nos devuelve un nuevo objeto de tipo *difftimes*. Puede ser complicado porque puede expresar el tiempo en distintas unidades. Lubridate resuelve esto con un nuevo tipo de objeto *duration* que siempre usa segundos. 
+
+```{r}
+# How old is Hadley?
+h_age <- today() - ymd(19791014)
+h_age
+as.duration(h_age)
+```
+
+Hay toda una familia de funciones asociadas a crear un objeto *duration* a partir de distintas unidades. Por ejemplo `dyears(1)` va a devolver la cantidad de segundos en un año y de yapa a veces muestra el lapso de tiempo en una unidad más amigable (un año es "31536000s (~52.14 weeks)"). 
+
+Estas funciones también se usan para sumar o restar segundos a una fecha_hora.
+
+> **Time Zone warning:** Ojo, *duretions* siempre se expresa en segundos y cuando hay cambios de zona horaria pueden aparecer cosas raras por ejemplo:                         
+`one_pm`                                                                                    
+`#> [1] "2016-03-12 13:00:00 EST"`                                                                    
+`one_pm + ddays(1)`                                                                                         
+`#> [1] "2016-03-13 14:00:00 EDT"`                                                            
+>
+> Al arrancar la primavera el este de EEUU cambia de zona horaria y entonces el 12 de marzo de todos los años tiene 23 horas. Cuando sumamos `ddays(1)` estamos sumando 86400 segundos y como este día es más corto nos termina cambiando la hora!
+
+
+#### Periods
+
+Los *periods* a diferencia de *durations* no tienen un largo fijo en segundos, trabajan con unidades que entiende un ser humano. En este caso también hay una familia de funciones que generan *periods*, por ejemplo `minutes(10)` genera un periodo de 10 minutos. 
+
+Ser puede sumar y restas *periods* entre si y a fechas_horas de una manera más intuitiva. 
+
+> **Time Zone warning:** para evitar el problema anterior, es mejor usar la familia de funciones que crean *periods* de esa manera si sumamos un día, esto no se ve afectado por el cambio de zona horaria:                                      
+`one_pm + days(1)`                                              
+`#> [1] "2016-03-13 13:00:00 EDT"`
+
+
+#### Intervals
+
+La clase *intervals* permite cuantificar lapsos de tiempo sin ambiguedades porque requiere un punto de inicipio y un punto final. Una manera de generar este objeto con el operador `%--%`:
+
+```{r}
+next_year <- today() + years(1)
+intervalo <- (today() %--% next_year)    #Crea un intervalo
+str(intervalo)
+```
+
+Pero rambién exite la función `interval()` y toda una familia de funciones que permite maniputar intervalos:
+
+```{r}
+x <- interval(today(), next_year)     #Crea un intervalo
+is.interval(x)                        #¿Es un intervalo?
+int_start(x)                          #¿Cuál es el punto inicial del intervalo x?
+int_start(x) <- today() + days(1)     #Cambiamos el punto inicial del intervalo
+int_start(x)
+int_length(x)                         #Nos da el largo del intervalo ¿en que unidad?
+int_flip(x)                           #De atrás para adelante!
+#etc!
+```
+
+
+#### Lo que se puede y no se puede hacer con los distintos tipos de objetos
+
+![](datetimes-arithmetic.png)
+
+> **Last Time zone warning:** Si quisieramos maniputar la zona horaria de nuestro dato hay algunas funciones útiles:      
+>
+> * `with_tz()` cambia la manera en que se muestra pero no la zona horaria.                                        
+> * `force()` cambia la zona horaria.

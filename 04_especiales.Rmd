@@ -17,10 +17,11 @@ library(tidyverse)
 Problemas al trabajar con fechas y horas:
 
 * No todos los años tienen 365 días.
-* No todos los días tienen 24 horas (cuando cambian de zona horaria por ejemplo)
-* Existen zonas horarias incluso dentro de un mismo país
+* No todos los días tienen 24 horas (cuando cambian de zona horaria por ejemplo).
+* Los meses tienen distinta duración.
+* Existen zonas horarias incluso dentro de un mismo país.
 
-Tipos de datos:
+Existen distintos tipos de datos:
 
 * **date** --> una fecha exacta, sin una hora específica.
 * **time** --> un momento específico del día.
@@ -30,11 +31,11 @@ Usualmente creamos este tipo de datos a partir de un string luego de importar un
 
 ### Date/Times from strings
 
-Se puede usasr `parse_datetime()` o las maravillas de `lubridate`. Esta librería tienen funciones que permiten convertir strings (o números!) en diversos formatos a date/time. La clave estña en elegir la función que se corresponde con el formato. Por ejemplo `ymd()` espera un string con los elementos de la fecha en orden año-mes-día.
+Se puede usasr `parse_datetime()` o las maravillas de `lubridate`. Esta librería tienen funciones que permiten convertir strings (o números!) en diversos formatos a date/time. La clave está en elegir la función que se corresponde con el formato. Por ejemplo `ymd()` espera un string con los elementos de la fecha en orden año-mes-día.
 
 Si además tenemos información sobre el tiempo hay otras fucniones de la misma familia. Por ejemplo `ymd_hms()` recibe además de el año-mes-día la hora-minuto-segundo. 
 
-> **Time Zone warning:** las funciones que devuelven FECHAS por defecto no tienen un time zone definido. Las funciones que devuelve FECHA_HORA por defecto le asignan "UTC" (Cordinated Universal Time). Ojo con esto cuando estamos trabajando con datos en hora local, para incluir esto hay que usar el argumento `tz`. 
+> **Time Zone warning:** las funciones que devuelven FECHAS por defecto no tienen un time zone definido. Pero las funciones que devuelve FECHA_HORA por defecto le asignan "UTC" (Cordinated Universal Time). Ojo con esto cuando estamos trabajando con datos en hora local, para incluir esto hay que usar el argumento `tz`. 
 >
 > * ¿Cómo se cual es mi time zone? --> `Sys.timezone()`                                                               
 > * ¿Cuáles son las times zones disponibles? --> `OlsonNames()`
@@ -106,9 +107,7 @@ Cuando necesitas cambiar entre fechas y fecha_hora (y es recomendable trabajar c
 
 ```{r}
 as_datetime(today())
-#> [1] "2019-01-08 UTC"
 as_date(now())
-#> [1] "2019-01-08"
 ```
 
 Por supuesto `as_datetime()` toma en cuenta el uso horario.
@@ -142,7 +141,7 @@ O si queremos crear un nuevo elemento, está la función `update()`. En el ejemp
 
 ### Cuentas con fechas
 
-R identifica distintos lapsos de tiempo:
+Lubridate identifica distintos lapsos de tiempo, cada uno es un tipo de objeto distinto con determinadas características:
 
 * **durations**, que representan un numero exacto de segundos.
 * **periods**, que representa unidades que entienden los humanos como semandas y meses.
@@ -176,7 +175,7 @@ Estas funciones también se usan para sumar o restar segundos a una fecha_hora.
 
 Los *periods* a diferencia de *durations* no tienen un largo fijo en segundos, trabajan con unidades que entiende un ser humano. En este caso también hay una familia de funciones que generan *periods*, por ejemplo `minutes(10)` genera un periodo de 10 minutos. 
 
-Ser puede sumar y restas *periods* entre si y a fechas_horas de una manera más intuitiva. 
+Ser puede sumar y restar *periods* entre si y a fechas_horas de una manera más intuitiva. 
 
 > **Time Zone warning:** para evitar el problema anterior, es mejor usar la familia de funciones que crean *periods* de esa manera si sumamos un día, esto no se ve afectado por el cambio de zona horaria:                                      
 `one_pm + days(1)`                                              
@@ -215,3 +214,14 @@ int_flip(x)                           #De atrás para adelante!
 >
 > * `with_tz()` cambia la manera en que se muestra pero no la zona horaria.                                        
 > * `force()` cambia la zona horaria.
+
+### Un ejercicio
+
+¿Los OVNIs están de moda?
+
+![](ufo.jpg)
+
+
+```{r eval=FALSE}
+ufo_sightings <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-06-25/ufo_sightings.csv")
+```

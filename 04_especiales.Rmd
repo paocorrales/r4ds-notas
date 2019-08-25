@@ -12,6 +12,11 @@ library(nycflights13)
 library(tidyverse)
 ```
 
+## Capítulo 14: Strings
+
+
+
+
 ## Capitulo 16: Dates and Times
 
 Problemas al trabajar con fechas y horas:
@@ -46,6 +51,10 @@ Si además tenemos información sobre el tiempo hay otras fucniones de la misma 
 > Pero tiene problemas por ejemplo cuando los números no estan expresados con dos dígitos:             
 > `ymd("201002-01", "201002-1", "20102-1")`
 
+```{r}
+x <- ymd_hm("20090101 12:00")
+str(x)
+```
 
 ### Date/Times from individual components
 
@@ -118,6 +127,14 @@ Por supuesto `as_datetime()` toma en cuenta el uso horario.
 `new_format <- format(old_format, "%Y/%m/%d-%H:%M:%S")`                                         
 La manera de expresar el formato final puede ser al menos aburrida de escribir, para ver las infinitas opciones posibles pueden buscar [acá](https://stat.ethz.ch/R-manual/R-devel/library/base/html/strptime.html).
 
+```{r}
+x <- ymd_hms("2013-01-01 00:00:00")
+new_format <- format(x, "%Y %m %d-%H:%M:%S")
+x
+new_format
+```
+
+
 ### Getting components
 
 Hay un ejemplo más arriba donde uso la función `month()` para filtrar las observaciones del mes de mayo. Como esta hay una familia entera por ejemplo `year()`, `wday()`, etc. Estas funciones sirven, al reves que `make_datetime()`, para extraer una partde del dato. 
@@ -126,14 +143,16 @@ Las funciones `month()` y `wday()` tienen el argumento `label` que devuelve el n
 
 ```{r}
 x <- ymd_hms("2013-01-01 05:15:00")
-month(x, label = TRUE, locale = "en_US.utf8")
+month(x, label = TRUE, locale = "en_US.utf8") #Ojo, si label = TRUE, devuelve un factor y no un número!
 ```
 
 
 Estas funciones también sirven para cambiar un determinado componente de una fecha o fecha_hora, por ejemplo:
 
 ```{r}
+x
 hour(x) <- hour(x) + 1  #Suma 1 hora a x.
+x
 ```
 
 O si queremos crear un nuevo elemento, está la función `update()`. En el ejemplo del libro, usa la función para colapsar los días y que quede solo la información de la hora y así ver la distribución de vuelos a lo largo del día. 
@@ -162,7 +181,7 @@ Hay toda una familia de funciones asociadas a crear un objeto *duration* a parti
 
 Estas funciones también se usan para sumar o restar segundos a una fecha_hora.
 
-> **Time Zone warning:** Ojo, *duretions* siempre se expresa en segundos y cuando hay cambios de zona horaria pueden aparecer cosas raras por ejemplo:                         
+> **Time Zone warning:** Ojo, *durations* siempre se expresa en segundos y cuando hay cambios de zona horaria pueden aparecer cosas raras por ejemplo:                         
 `one_pm`                                                                                    
 `#> [1] "2016-03-12 13:00:00 EST"`                                                                    
 `one_pm + ddays(1)`                                                                                         

@@ -381,6 +381,9 @@ $(document).ready(function () {
 </div>
 
 
+<div id="capitulo-14-strings" class="section level2">
+<h2>Capítulo 14: Strings</h2>
+</div>
 <div id="capitulo-16-dates-and-times" class="section level2">
 <h2>Capitulo 16: Dates and Times</h2>
 <p>Problemas al trabajar con fechas y horas:</p>
@@ -415,6 +418,9 @@ $(document).ready(function () {
 <p>Pero tiene problemas por ejemplo cuando los números no estan expresados con dos dígitos:<br />
 <code>ymd(&quot;201002-01&quot;, &quot;201002-1&quot;, &quot;20102-1&quot;)</code></p>
 </blockquote>
+<pre class="r"><code>x &lt;- ymd_hm(&quot;20090101 12:00&quot;)
+str(x)</code></pre>
+<pre><code>##  POSIXct[1:1], format: &quot;2009-01-01 12:00:00&quot;</code></pre>
 </div>
 <div id="datetimes-from-individual-components" class="section level3">
 <h3>Date/Times from individual components</h3>
@@ -477,9 +483,9 @@ $(document).ready(function () {
 <h3>Date/Times from other types</h3>
 <p>Cuando necesitas cambiar entre fechas y fecha_hora (y es recomendable trabajar con la unidad más simple necesaria) se usa <code>as_datetime()</code> o <code>as_date()</code>.</p>
 <pre class="r"><code>as_datetime(today())</code></pre>
-<pre><code>## [1] &quot;2019-08-25 UTC&quot;</code></pre>
+<pre><code>## [1] &quot;2019-08-26 UTC&quot;</code></pre>
 <pre class="r"><code>as_date(now())</code></pre>
-<pre><code>## [1] &quot;2019-08-25&quot;</code></pre>
+<pre><code>## [1] &quot;2019-08-26&quot;</code></pre>
 <p>Por supuesto <code>as_datetime()</code> toma en cuenta el uso horario.</p>
 <blockquote>
 <p><strong>Sobre el formato:</strong> Con lubridate parece no ser necesario (que inteligente!) pero algunas funciones de base y otros paquetes que manejan dates/times requieren que le indiquemos el formato de la fecha para que pueda interpretar el string que queremos convertir.</p>
@@ -487,17 +493,27 @@ $(document).ready(function () {
 <code>new_format &lt;- format(old_format, &quot;%Y/%m/%d-%H:%M:%S&quot;)</code><br />
 La manera de expresar el formato final puede ser al menos aburrida de escribir, para ver las infinitas opciones posibles pueden buscar <a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/strptime.html">acá</a>.</p>
 </blockquote>
+<pre class="r"><code>x &lt;- ymd_hms(&quot;2013-01-01 00:00:00&quot;)
+new_format &lt;- format(x, &quot;%Y %m %d-%H:%M:%S&quot;)
+x</code></pre>
+<pre><code>## [1] &quot;2013-01-01 UTC&quot;</code></pre>
+<pre class="r"><code>new_format</code></pre>
+<pre><code>## [1] &quot;2013 01 01-00:00:00&quot;</code></pre>
 </div>
 <div id="getting-components" class="section level3">
 <h3>Getting components</h3>
 <p>Hay un ejemplo más arriba donde uso la función <code>month()</code> para filtrar las observaciones del mes de mayo. Como esta hay una familia entera por ejemplo <code>year()</code>, <code>wday()</code>, etc. Estas funciones sirven, al reves que <code>make_datetime()</code>, para extraer una partde del dato.</p>
 <p>Las funciones <code>month()</code> y <code>wday()</code> tienen el argumento <code>label</code> que devuelve el nombre del mes o del día de la semana. Por defecto esto escupe los nombres en el idioma “local”, para cambiar esto hay que usar el argumento <code>locale</code> por ejemplo, para que los nombres estén en inglés:</p>
 <pre class="r"><code>x &lt;- ymd_hms(&quot;2013-01-01 05:15:00&quot;)
-month(x, label = TRUE, locale = &quot;en_US.utf8&quot;)</code></pre>
+month(x, label = TRUE, locale = &quot;en_US.utf8&quot;) #Ojo, si label = TRUE, devuelve un factor y no un número!</code></pre>
 <pre><code>## [1] Jan
 ## 12 Levels: Jan &lt; Feb &lt; Mar &lt; Apr &lt; May &lt; Jun &lt; Jul &lt; Aug &lt; Sep &lt; ... &lt; Dec</code></pre>
 <p>Estas funciones también sirven para cambiar un determinado componente de una fecha o fecha_hora, por ejemplo:</p>
-<pre class="r"><code>hour(x) &lt;- hour(x) + 1  #Suma 1 hora a x.</code></pre>
+<pre class="r"><code>x</code></pre>
+<pre><code>## [1] &quot;2013-01-01 05:15:00 UTC&quot;</code></pre>
+<pre class="r"><code>hour(x) &lt;- hour(x) + 1  #Suma 1 hora a x.
+x</code></pre>
+<pre><code>## [1] &quot;2013-01-01 06:15:00 UTC&quot;</code></pre>
 <p>O si queremos crear un nuevo elemento, está la función <code>update()</code>. En el ejemplo del libro, usa la función para colapsar los días y que quede solo la información de la hora y así ver la distribución de vuelos a lo largo del día.</p>
 </div>
 <div id="cuentas-con-fechas" class="section level3">
@@ -514,13 +530,19 @@ month(x, label = TRUE, locale = &quot;en_US.utf8&quot;)</code></pre>
 <pre class="r"><code># How old is Hadley?
 h_age &lt;- today() - ymd(19791014)
 h_age</code></pre>
-<pre><code>## Time difference of 14560 days</code></pre>
-<pre class="r"><code>as.duration(h_age)</code></pre>
-<pre><code>## [1] &quot;1257984000s (~39.86 years)&quot;</code></pre>
+<pre><code>## Time difference of 14561 days</code></pre>
+<pre class="r"><code>x &lt;- as.duration(h_age)</code></pre>
 <p>Hay toda una familia de funciones asociadas a crear un objeto <em>duration</em> a partir de distintas unidades. Por ejemplo <code>dyears(1)</code> va a devolver la cantidad de segundos en un año y de yapa a veces muestra el lapso de tiempo en una unidad más amigable (un año es “31536000s (~52.14 weeks)”).</p>
-<p>Estas funciones también se usan para sumar o restar segundos a una fecha_hora.</p>
+<p>Estas funciones también se usan para sumar o restar segundos a una fecha_hora. Pero el objeto duration trae problemas si queremos por ejemplo hacer un gráfico. <code>ggplot()</code> no puede graficar una duración y entonces es necesario convertirlo a numérico.</p>
+<pre class="r"><code>str(x)                  #Clase 'Duration'</code></pre>
+<pre><code>## Formal class 'Duration' [package &quot;lubridate&quot;] with 1 slot
+##   ..@ .Data: num 1.26e+09</code></pre>
+<pre class="r"><code>as.numeric(x)           #Convertimos x numérico, nos devuelve una cantidad de segundos.</code></pre>
+<pre><code>## [1] 1258070400</code></pre>
+<pre class="r"><code>as.numeric(x, &quot;year&quot;)   #Se convierte a numérico pero ahora convertido a años!</code></pre>
+<pre><code>## [1] 39.86585</code></pre>
 <blockquote>
-<p><strong>Time Zone warning:</strong> Ojo, <em>duretions</em> siempre se expresa en segundos y cuando hay cambios de zona horaria pueden aparecer cosas raras por ejemplo:<br />
+<p><strong>Time Zone warning:</strong> Ojo, <em>durations</em> siempre se expresa en segundos y cuando hay cambios de zona horaria pueden aparecer cosas raras por ejemplo:<br />
 <code>one_pm</code><br />
 <code>#&gt; [1] &quot;2016-03-12 13:00:00 EST&quot;</code><br />
 <code>one_pm + ddays(1)</code><br />
@@ -544,23 +566,23 @@ h_age</code></pre>
 <pre class="r"><code>next_year &lt;- today() + years(1)
 intervalo &lt;- (today() %--% next_year)    #Crea un intervalo
 str(intervalo)</code></pre>
-<pre><code>## Formal class &#39;Interval&#39; [package &quot;lubridate&quot;] with 3 slots
+<pre><code>## Formal class 'Interval' [package &quot;lubridate&quot;] with 3 slots
 ##   ..@ .Data: num 31622400
-##   ..@ start: POSIXct[1:1], format: &quot;2019-08-25&quot;
+##   ..@ start: POSIXct[1:1], format: &quot;2019-08-26&quot;
 ##   ..@ tzone: chr &quot;UTC&quot;</code></pre>
 <p>Pero rambién exite la función <code>interval()</code> y toda una familia de funciones que permite maniputar intervalos:</p>
 <pre class="r"><code>x &lt;- interval(today(), next_year)     #Crea un intervalo
 is.interval(x)                        #¿Es un intervalo?</code></pre>
 <pre><code>## [1] TRUE</code></pre>
 <pre class="r"><code>int_start(x)                          #¿Cuál es el punto inicial del intervalo x?</code></pre>
-<pre><code>## [1] &quot;2019-08-25 UTC&quot;</code></pre>
+<pre><code>## [1] &quot;2019-08-26 UTC&quot;</code></pre>
 <pre class="r"><code>int_start(x) &lt;- today() + days(1)     #Cambiamos el punto inicial del intervalo
 int_start(x)</code></pre>
-<pre><code>## [1] &quot;2019-08-25 21:00:00 -03&quot;</code></pre>
+<pre><code>## [1] &quot;2019-08-26 21:00:00 -03&quot;</code></pre>
 <pre class="r"><code>int_length(x)                         #Nos da el largo del intervalo ¿en que unidad?</code></pre>
 <pre><code>## [1] 31536000</code></pre>
 <pre class="r"><code>int_flip(x)                           #De atrás para adelante!</code></pre>
-<pre><code>## [1] 2020-08-25 UTC--2019-08-26 UTC</code></pre>
+<pre><code>## [1] 2020-08-26 UTC--2019-08-27 UTC</code></pre>
 <pre class="r"><code>#etc!</code></pre>
 </div>
 <div id="lo-que-se-puede-y-no-se-puede-hacer-con-los-distintos-tipos-de-objetos" class="section level4">

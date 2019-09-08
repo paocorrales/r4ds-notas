@@ -174,12 +174,19 @@ Si calculamos la diferencia entre dos fechas, R nos devuelve un nuevo objeto de 
 # How old is Hadley?
 h_age <- today() - ymd(19791014)
 h_age
-as.duration(h_age)
+x <- as.duration(h_age)
 ```
 
 Hay toda una familia de funciones asociadas a crear un objeto *duration* a partir de distintas unidades. Por ejemplo `dyears(1)` va a devolver la cantidad de segundos en un año y de yapa a veces muestra el lapso de tiempo en una unidad más amigable (un año es "31536000s (~52.14 weeks)"). 
 
-Estas funciones también se usan para sumar o restar segundos a una fecha_hora.
+Estas funciones también se usan para sumar o restar segundos a una fecha_hora. Pero el objeto duration trae problemas si queremos por ejemplo hacer un gráfico. `ggplot()` no puede graficar una duración y entonces es necesario convertirlo a numérico. 
+
+```{r}
+str(x)                  #Clase 'Duration'
+as.numeric(x)           #Convertimos x numérico, nos devuelve una cantidad de segundos.
+as.numeric(x, "year")   #Se convierte a numérico pero ahora convertido a años!
+```
+
 
 > **Time Zone warning:** Ojo, *durations* siempre se expresa en segundos y cuando hay cambios de zona horaria pueden aparecer cosas raras por ejemplo:                         
 `one_pm`                                                                                    

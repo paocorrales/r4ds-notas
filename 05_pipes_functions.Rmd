@@ -1,0 +1,59 @@
+---
+title: "05_pipes_functions"
+author: "Pao"
+date: "September 8, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Pipes
+
+* `%>%` evita repetir o asignar pasos intermedios a variables dummies. También hace el código más legible. 
+
+* `%T>%`permite continuar con la cadena de comandos aún cuando uno de ellos no devuelve nada o genera un "final".
+
+```{r}
+library(tidyverse)
+library(magrittr)
+
+mtcars %>% 
+  filter(carb > 1) %T>%
+  plot() #No ggplot!!
+```
+
+## Functions
+
+Ejercicios adicionales
+
+Dados dos vectores, devuelve un nuevo vector con los elementos del primer vector que no se repitan en el segundo. 
+```{r}
+x <- 1:10
+y <- c(5, 7, 9, 11)
+
+unico <- function(x, y) {
+  #unique no funcionaría porque y puede tener cosas que no tiene x
+  
+  x[!(x %in% y)]
+  
+}
+```
+
+```{r}
+x <- 1:15
+int <- 8
+
+sum(x == int)
+
+```
+
+```{r}
+
+name <- names(mtcars)
+
+class(select(mtcars, name[i]))
+
+```
+

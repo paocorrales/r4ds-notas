@@ -1,0 +1,78 @@
+---
+title: "Launches"
+author: "Pao"
+date: "November 10, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Datos
+
+```{r lectura}
+library(tidyverse)
+
+agencias <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-01-15/agencies.csv")
+lanzamientos <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-01-15/launches.csv")
+```
+
+Queremos ver como evolucionó el lanzamiento de cohetes a lo largo del tiempo.
+
+```{r evolucion_anios}
+lanzamientos %>% 
+  count(launch_year) %>% 
+  ggplot(aes(launch_year, n)) +
+  geom_line() +
+  labs(x = "Años",
+       y = "Cantidad de lanzamientos por año",
+       title = "¿Cómo evolución la cantidad de lanzamiento por año?")
+```
+
+Se ve el auge inicial justo antes de los 60, mucho ruido en el medio y luego de un mínimo post 2000 un nuevo crecimiento. ¿A que se deberá este nuevo crecimiento?
+
+Hay agencias publicas, como la NASA, privadas y startups. No se cual será la diferencia entre las dos últimas. Pero imagino que al principio eran todas del gobierno y luego aparecieron las privadas. Será que el crecimiento de los últimos 20 años se debe a agencias como SpaceX?
+
+```{r evolucion_tipo_agencias}
+lanzamientos %>% 
+  count(agency_type, sort = TRUE)
+
+lanzamientos %>% 
+  group_by(agency_type) %>% 
+  count(launch_year) %>%
+  ungroup() %>% 
+  mutate(agency_type = fct_reorder(agency_type, -n, sum)) %>% 
+  ggplot(aes(launch_year, n)) +
+  geom_line(aes(color = agency_type)) +
+  scale_color_viridis_d(name = "Tipo de agencia") +
+  labs(x = "Años",
+       y = "Cantidad de lanzamientos por año",
+       title = "¿Cómo evolución la cantidad de lanzamiento por año?",
+       subtitle = "Para cada tipo de agencia")
+```
+
+Genial, me interesan las internas EE.UU. y Rusia. Veamos que pasa por paises. 
+
+```{r}
+lanzamientos %>% 
+  count(state_code, sort = TRUE)
+```
+
+Oops! Acá hay que tener en cuenta que Russia y Unión sovietica son la "misma" cosa. Pero seguro que lanzaron más cosas que EE.UU.
+
+```{r}
+lanzamientos %>% 
+  mutate(state_code = if_else(state_code == "SU", "RU", state_code)) %>% 
+  filter(state_code %in% c("RU", "US")) %>% 
+  count(launch_year, state_code, sort = TRUE) %>% 
+  ggplot(aes(launch_year, n)) +
+  geom_line(aes(color = state_code))
+```
+
+Bueno, parece que a EEUU se le acabó la nafta después de Mercury/Apollo. ¿Me pregunto que habrán lanzando todo ese tiempo? Satélites? Vuelvo a ver que pasa con las privadas/startups porque SpaceX está de moda. 
+
+```{r}
+lanzamientos
+```
+

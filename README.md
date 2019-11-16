@@ -12,3 +12,11 @@
 
 **Capítulos:** 10 a 13
 
+### Cuarto encuentro: tipos especiales
+
+**Capítulos:** 14 a 16
+
+### Quinto encuentro: pipes y funciones
+
+**Capítulos:** 18 y 19
+

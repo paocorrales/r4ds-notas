@@ -184,7 +184,7 @@ Estas funciones también se usan para sumar o restar segundos a una fecha_hora. 
 ```{r}
 str(x)                  #Clase 'Duration'
 as.numeric(x)           #Convertimos x numérico, nos devuelve una cantidad de segundos.
-as.numeric(x, "year")   #Se convierte a numérico pero ahora convertido a años!
+as.numeric(x, "year")   #Se convierte a numérico pero ahora convertido a años!  
 ```
 
 

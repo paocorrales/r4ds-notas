@@ -8,7 +8,7 @@
 
 **Capítulos:** 5 a 8
 
-### Primer encuentro: Wrangle
+### Tercer encuentro: Wrangle
 
 **Capítulos:** 10 a 13
 

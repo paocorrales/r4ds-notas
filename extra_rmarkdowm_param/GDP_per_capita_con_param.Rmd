@@ -1,0 +1,33 @@
+---
+title: "GDP per cápita"
+author: "Pao"
+date: "November 22, 2019"
+output: html_document
+params:
+  pais: "Uruguay"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(gapminder)
+```
+
+## Evolución del GDP per cápita: Argentina y `r params$pais`
+
+```{r}
+gapminder_unfiltered %>% 
+  filter(country %in% c("Argentina", params$pais)) %>% 
+  ggplot(aes(year, gdpPercap)) +
+  geom_line(aes(color = country)) +
+  geom_point(aes(color = country)) +
+  scale_color_viridis_d() +
+  labs(title = "GDP per capita desde 1952 hasta 2010",
+       subtitle = paste0("Comparación entre Argentina y ", params$pais),
+       x = "Año",
+       y = "GDP per cápita",
+       color = "País") +
+  theme_minimal()
+```
+

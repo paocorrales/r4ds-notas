@@ -1,0 +1,31 @@
+---
+title: "GDP per cápita"
+author: "Pao"
+date: "November 22, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(gapminder)
+```
+
+## Evolución del GDP per cápita: Argentina y Brasil
+
+```{r}
+gapminder_unfiltered %>% 
+  filter(country %in% c("Argentina", "Brazil")) %>% 
+  ggplot(aes(year, gdpPercap)) +
+  geom_line(aes(color = country)) +
+  geom_point(aes(color = country)) +
+  scale_color_viridis_d() +
+  labs(title = "GDP per capita desde 1952 hasta 2010",
+       subtitle = "Comparación entre Argentina y Brasil",
+       x = "Año",
+       y = "GDP per cápita",
+       color = "País") +
+  theme_minimal()
+```
+

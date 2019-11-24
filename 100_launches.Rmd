@@ -70,9 +70,54 @@ lanzamientos %>%
   geom_line(aes(color = state_code))
 ```
 
-Bueno, parece que a EEUU se le acabó la nafta después de Mercury/Apollo. ¿Me pregunto que habrán lanzando todo ese tiempo? Satélites? Vuelvo a ver que pasa con las privadas/startups porque SpaceX está de moda. 
+Bueno, parece que a EEUU se le acabó la nafta después de Mercury/Apollo. ¿Me pregunto que habrán lanzando todo ese tiempo? Satélites? 
+
+Veamos cual fue el máximo por año de lanzamientos de cada país
 
 ```{r}
-lanzamientos
+lanzamientos %>% 
+  group_by(state_code, launch_year) %>% 
+  count() %>% 
+  group_by(state_code) %>% 
+  filter(n == max(n))
+```
+
+```{r}
+lanzamientos %>% 
+  group_by(state_code, launch_year) %>% 
+  count() %>% 
+  group_by(state_code) %>% 
+  arrange(state_code, desc(n)) %>% 
+  top_n(1, n)
+  
+```
+
+```{r}
+# Versión con tidytext, ordena. Pero super innecesario 
+lanzamientos %>% 
+  group_by(agency_type) %>%
+  mutate(agency_lump = as.character(fct_lump(agency, 5))) %>%
+  group_by(agency_lump, agency_type) %>% 
+  summarise(count = n(), state_code = state_code[1]) %>% 
+  ungroup() %>% 
+  mutate(agency_ordered = tidytext::reorder_within(agency_lump, count, agency_type)) %>% 
+  ggplot(aes(agency_ordered, count)) +
+  geom_point(aes(color = state_code)) +
+  facet_wrap(~agency_type, scales = "free_y") +
+  tidytext::scale_x_reordered() +
+  coord_flip() 
+
+# Versión razonable
+lanzamientos %>% 
+  group_by(agency_type) %>%
+  mutate(agency_lump = as.character(fct_lump(agency, 5))) %>%
+  group_by(agency_lump, agency_type) %>%      #Ahora quiero contar lanzamientos para cada agencia y tipo de agencia (porque está el "Other" que se repite!)
+  summarise(count = n(), state_code = state_code[1]) %>%  #Agrego state_code acá para poder pasarle la variable al color
+  ungroup() %>% 
+  ggplot(aes(agency_lump, count)) +
+  geom_point(aes(color = state_code)) +
+  facet_wrap(~agency_type, scales = "free_y") +
+  coord_flip()
+  
 ```
 

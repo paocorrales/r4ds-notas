@@ -1,0 +1,123 @@
+---
+title: "Launches"
+author: "Pao"
+date: "November 10, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Datos
+
+```{r lectura}
+library(tidyverse)
+
+agencias <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-01-15/agencies.csv")
+lanzamientos <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-01-15/launches.csv")
+```
+
+Queremos ver como evolucionó el lanzamiento de cohetes a lo largo del tiempo.
+
+```{r evolucion_anios}
+lanzamientos %>% 
+  count(launch_year) %>% 
+  ggplot(aes(launch_year, n)) +
+  geom_line() +
+  labs(x = "Años",
+       y = "Cantidad de lanzamientos por año",
+       title = "¿Cómo evolución la cantidad de lanzamiento por año?")
+```
+
+Se ve el auge inicial justo antes de los 60, mucho ruido en el medio y luego de un mínimo post 2000 un nuevo crecimiento. ¿A que se deberá este nuevo crecimiento?
+
+Hay agencias publicas, como la NASA, privadas y startups. No se cual será la diferencia entre las dos últimas. Pero imagino que al principio eran todas del gobierno y luego aparecieron las privadas. Será que el crecimiento de los últimos 20 años se debe a agencias como SpaceX?
+
+```{r evolucion_tipo_agencias}
+lanzamientos %>% 
+  count(agency_type, sort = TRUE)
+
+lanzamientos %>% 
+  group_by(agency_type) %>% 
+  count(launch_year) %>%
+  ungroup() %>% 
+  mutate(agency_type = fct_reorder(agency_type, -n, sum)) %>% 
+  ggplot(aes(launch_year, n)) +
+  geom_line(aes(color = agency_type)) +
+  scale_color_viridis_d(name = "Tipo de agencia") +
+  labs(x = "Años",
+       y = "Cantidad de lanzamientos por año",
+       title = "¿Cómo evolución la cantidad de lanzamiento por año?",
+       subtitle = "Para cada tipo de agencia")
+```
+
+Genial, me interesan las internas EE.UU. y Rusia. Veamos que pasa por paises. 
+
+```{r}
+lanzamientos %>% 
+  count(state_code, sort = TRUE)
+```
+
+Oops! Acá hay que tener en cuenta que Russia y Unión sovietica son la "misma" cosa. Pero seguro que lanzaron más cosas que EE.UU.
+
+```{r}
+lanzamientos %>% 
+  mutate(state_code = if_else(state_code == "SU", "RU", state_code)) %>% 
+  filter(state_code %in% c("RU", "US")) %>% 
+  count(launch_year, state_code, sort = TRUE) %>% 
+  ggplot(aes(launch_year, n)) +
+  geom_line(aes(color = state_code))
+```
+
+Bueno, parece que a EEUU se le acabó la nafta después de Mercury/Apollo. ¿Me pregunto que habrán lanzando todo ese tiempo? Satélites? 
+
+Veamos cual fue el máximo por año de lanzamientos de cada país
+
+```{r}
+lanzamientos %>% 
+  group_by(state_code, launch_year) %>% 
+  count() %>% 
+  group_by(state_code) %>% 
+  filter(n == max(n))
+```
+
+```{r}
+lanzamientos %>% 
+  group_by(state_code, launch_year) %>% 
+  count() %>% 
+  group_by(state_code) %>% 
+  arrange(state_code, desc(n)) %>% 
+  top_n(1, n)
+  
+```
+
+```{r}
+# Versión con tidytext, ordena. Pero super innecesario 
+lanzamientos %>% 
+  group_by(agency_type) %>%
+  mutate(agency_lump = as.character(fct_lump(agency, 5))) %>%
+  group_by(agency_lump, agency_type) %>% 
+  summarise(count = n(), state_code = state_code[1]) %>% 
+  ungroup() %>% 
+  mutate(agency_ordered = tidytext::reorder_within(agency_lump, count, agency_type)) %>% 
+  ggplot(aes(agency_ordered, count)) +
+  geom_point(aes(color = state_code)) +
+  facet_wrap(~agency_type, scales = "free_y") +
+  tidytext::scale_x_reordered() +
+  coord_flip() 
+
+# Versión razonable
+lanzamientos %>% 
+  group_by(agency_type) %>%
+  mutate(agency_lump = as.character(fct_lump(agency, 5))) %>%
+  group_by(agency_lump, agency_type) %>%      #Ahora quiero contar lanzamientos para cada agencia y tipo de agencia (porque está el "Other" que se repite!)
+  summarise(count = n(), state_code = state_code[1]) %>%  #Agrego state_code acá para poder pasarle la variable al color
+  ungroup() %>% 
+  ggplot(aes(agency_lump, count)) +
+  geom_point(aes(color = state_code)) +
+  facet_wrap(~agency_type, scales = "free_y") +
+  coord_flip()
+  
+```
+

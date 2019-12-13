@@ -1,0 +1,96 @@
+---
+title: "zonas_horarias"
+author: "Pao"
+date: "12/13/2019"
+output: html_document
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(lubridate)
+```
+
+## Reportes de eventos severos en Argentina
+
+En Argentina ocurren muchas de las tormentas más severas del mundo, generan granizo de gran tampaño, mucha actividad eléctrica, lluvias torrenciales y a veces tornados. ¿Cómo sabemos esto? De manera indirecta, estimando la cantidad de rayos en cada punto del planeta con satélites. Les propongo explorar una base de datos de eventos severos reportados por la gente durante la campaña RELAMPAGO. 
+
+Los reportes se recolectaron a traves de un formulario de google que entre otros datos les pedía: el tipo de evento o eventos observados, el lugar y horario de ocurrencia del evento. 
+
+```{r datos}
+reportes <- read_csv("eventos_severos_RELAMPAGO.csv", ) %>% 
+  glimpse()
+```
+
+La base de datos tiene 4 variables, la fecha (que R no reconoció como tal), la ubicación en latitud y longitud y el tipo de evento. Antes de solucionar el problema con la variable fecha, veamos que nos dicen los datos a simple vita.
+
+Hay 6 tipos de eventos, "Luvias intensas" es el más frecuente y "Tornado" el menos frecuente. 
+
+```{r tipos_eventos}
+reportes %>% 
+  group_by(evento) %>% 
+  count(sort = TRUE)
+```
+
+## Fechas y horas, en hora local?
+
+Cuando trabajamos con datos temperales y específicamente aquellos que tienen fecha y hora una de las consideraciones que tenemos que tener en cuenta es la zona horaria. Por defecto `lubridate` y la ciencia en general trabaja en *hora UTC* (o Coordinated Universal Time) pero es posible que nuestros datos estén almacenados en una zona horaria totalmente distinta.
+
+En este caso, los reportes tienen la hora a la que ocurrió el evento en Argentina. Por esto podemos inferir que la zona horaria es *-3*. Esto significa *3 horas menos respecto de la hora UTC*.  ¿Cómo le avisamos a R?
+
+Existe varias soluciones.
+
+Como es de esperarse, por defecto cualquiera de las funciones de la familia `ymd_hms()` le asigna la zona horaria UTC.
+
+```{r parse_fecha}
+reportes <- reportes %>% 
+  mutate(fecha_convertida = mdy_hms(fecha)) 
+
+reportes[["fecha_convertida"]][1:10] #Necesitamos extraer el vector para ver la tz.
+```
+
+Pero se puede cambiar ese comportamiento con el argumento `tz`. el truco está en saber la nomenclatura de zonas horarias.
+
+```{r tz}
+OlsonNames() #Lista de las nás de 600 zonas horarias disponibles
+
+Sys.timezone() #¿En qué zona horaria está mi computadora?
+```
+
+Ahora si, podemos usar esa información en el argumento `tz`.
+
+```{r}
+reportes <- reportes %>% 
+  mutate(fecha_convertida_tz = mdy_hms(fecha, tz = "America/Argentina/Buenos_Aires")) 
+
+reportes[["fecha_convertida_tz"]][1:10]
+```
+
+ Ahora si, R interpresa estas fechas y horas en la zona horaria correcta. Sin embargo, en meteorología estamos acostumbrados a comunicar nuestros resultados en hora *UTC* (u *hora Z*, que es lo mismo), ¿cómo convertimos las fechas y horas a otra zona horaria?
+ 
+ `lubridate` tiene dos funciones específicas. 
+ 
+  * `force_tz()` mantiene constante la hora que vemos en el reloj pero cambia la zona horaria. 
+ 
+```{r}
+reportes <- reportes %>% 
+  mutate(fecha_force_tz = force_tz(fecha_convertida_tz, tzone = "UTC")) 
+
+reportes[["fecha_force_tz"]][1:10]
+```
+
+ Pero esto no resuelve nuestro problema, si queremos expresar "2018-10-30 12:50:00 -3" en hora UTC hay que *sumarle* 3 horas.
+ 
+  * `with_tz()` nos permite cambiar de zona horaria pero para un mismo instante en el tiempo. En otras palabras, podemos responder ¿Qué hora es en Australia? Esto es justamente lo que necesitamos.
+ 
+```{r}
+reportes <- reportes %>% 
+  mutate(fecha_with_tz = with_tz(fecha_convertida_tz, tzone = "UTC")) 
+
+reportes[["fecha_with_tz"]][1:10]
+```
+ 
+

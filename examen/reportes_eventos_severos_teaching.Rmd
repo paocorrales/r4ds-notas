@@ -7,6 +7,8 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
+library(tidyverse)
+library(lubridate)
 ```
 
 ## Reportes de eventos severos en Argentina
@@ -16,8 +18,8 @@ En Argentina ocurren muchas de las tormentas más severas del mundo, generan gra
 Los reportes se recolectaron a traves de un formulario de google que entre otros datos pedía: el tipo de evento o eventos observados, el lugar y horario de ocurrencia del evento. 
 
 ```{r datos}
-#Leamos la base de datos
-
+reportes <- read_csv("eventos_severos_RELAMPAGO.csv") %>% 
+  glimpse()
 ```
 
 La base de datos tiene 4 variables, la fecha (que R no reconoció como tal), la ubicación en latitud y longitud y el tipo de evento. 
@@ -25,7 +27,10 @@ La base de datos tiene 4 variables, la fecha (que R no reconoció como tal), la 
 Arreglemos la variable fecha. 
 
 ```{r parse_fecha}
+reportes <- reportes %>% 
+  mutate(fecha_convertida = mdy_hms(fecha)) 
 
+reportes[["fecha_convertida"]][1:10] #Necesitamos extraer el vector para ver la tz.
 ```
 
 Por defecto cualquiera de las funciones de la familia `ymd_hms()` le asigna la zona horaria UTC a la variabe de salida.
@@ -39,11 +44,19 @@ En este caso, los reportes tienen la hora a la que ocurrió el evento en Argenti
 Todas las funciones de la familia `ymd_hms()` tiene un argumento `tz` que permite cambiar la zona horaria. El truco está en saber la nomenclatura de zonas horarias.
 
 ```{r}
-#Lista de las 600 zonas horarias disponibles
+head(OlsonNames()) #Lista de las nás de 600 zonas horarias disponibles
 
+Sys.timezone() #¿En qué zona horaria está mi computadora?
 ```
 
 Podemos usar esa información en el argumento `tz`.
+
+```{r}
+reportes <- reportes %>% 
+  mutate(fecha_convertida_tz = mdy_hms(fecha, tz = "America/Argentina/Buenos_Aires")) 
+
+reportes[["fecha_convertida_tz"]][1:10]
+```
 
 ### Tranformando zonas horarias
 
@@ -51,8 +64,29 @@ Ahora si, R interpresa estas fechas y horas en la zona horaria correcta. Sin emb
  
 `lubridate` tiene dos funciones específicas para trabajar con zonas horarias. 
  
-* `force_tz()` mantiene constante la hora que vemos en el reloj pero cambia la zona horaria.
+* `force_tz()` mantiene constante la hora que vemos en el reloj pero cambia la zona horaria.  
  
-* `with_tz()` nos permite cambiar de zona horaria manteniendo el mismo instante en el tiempo. En otras palabras, podemos responder ¿Qué hora es en Australia?
+```{r}
+reportes <- reportes %>% 
+  mutate(fecha_force_tz = force_tz(fecha_convertida_tz, tzone = "UTC")) 
+
+reportes[["fecha_force_tz"]][1:10]
+```
+
+Esto no resuelve nuestro problema, si queremos expresar "2018-10-30 12:50:00 -3" en hora UTC hay que *sumarle* 3 horas.
  
+* `with_tz()` nos permite cambiar de zona horaria manteniendo el mismo instante en el tiempo. En otras palabras, podemos responder ¿Qué hora es en Australia? Esto es justamente lo que necesitamos.
+ 
+```{r}
+reportes <- reportes %>% 
+  mutate(fecha_with_tz = with_tz(fecha_convertida_tz, tzone = "UTC")) 
+
+reportes[["fecha_with_tz"]][1:10]
+```
+ 
+Comparemos las variables que creamos.
+
+```{r}
+reportes
+```
 

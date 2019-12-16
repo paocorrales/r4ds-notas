@@ -6,7 +6,6 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-
 ```
 
 ## Reportes de eventos severos en Argentina
@@ -16,7 +15,6 @@ En Argentina ocurren muchas de las tormentas más severas del mundo, generan gra
 Los reportes se recolectaron a traves de un formulario de google que entre otros datos pedía: el tipo de evento o eventos observados, el lugar y horario de ocurrencia del evento. 
 
 ```{r datos}
-#Leamos la base de datos
 
 ```
 
@@ -28,31 +26,15 @@ Arreglemos la variable fecha.
 
 ```
 
-Por defecto cualquiera de las funciones de la familia `ymd_hms()` le asigna la zona horaria UTC a la variabe de salida.
-
-## Fechas y horas, en hora local?
-
-Cuando trabajamos con datos temporales y específicamente aquellos que tienen fecha y hora una de las consideraciones que tenemos que tener en cuenta es la zona horaria. Por defecto `lubridate` y la ciencia en general trabaja en *hora UTC* (o Coordinated Universal Time) pero es posible que nuestros datos estén almacenados en una zona horaria totalmente distinta.
-
-En este caso, los reportes tienen la hora a la que ocurrió el evento en Argentina. Por esto podemos inferir que la zona horaria es *-3*. Esto significa *3 horas menos respecto de la hora UTC*.  ¿Cómo le avisamos a R?
-
-Todas las funciones de la familia `ymd_hms()` tiene un argumento `tz` que permite cambiar la zona horaria. El truco está en saber la nomenclatura de zonas horarias.
-
-```{r}
-#Lista de las 600 zonas horarias disponibles
-
-```
-
-Podemos usar esa información en el argumento `tz`.
 
 ### Tranformando zonas horarias
-
-Ahora si, R interpresa estas fechas y horas en la zona horaria correcta. Sin embargo, en meteorología estamos acostumbrados a comunicar nuestros resultados en hora *UTC* (u *hora Z*, que es lo mismo), ¿cómo convertimos las fechas y horas a otra zona horaria?
  
 `lubridate` tiene dos funciones específicas para trabajar con zonas horarias. 
  
 * `force_tz()` mantiene constante la hora que vemos en el reloj pero cambia la zona horaria.
+
  
 * `with_tz()` nos permite cambiar de zona horaria manteniendo el mismo instante en el tiempo. En otras palabras, podemos responder ¿Qué hora es en Australia?
  
+
 
